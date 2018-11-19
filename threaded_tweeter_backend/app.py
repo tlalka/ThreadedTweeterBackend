@@ -12,7 +12,7 @@ import twitter
 app = Flask(__name__)
 
 TWITTER_OAUTH = 'https://api.twitter.com/oauth'
-TT_API_URL = 'https://api.threadedtweeter.com/v2/'
+TT_API_URL = 'https://api.threadedtweeter.com/v2'
 COOKIE_BASE_URL = '.threadedtweeter.com'
 os.environ['client_key'] = '#'
 os.environ['client_secret'] = '##'
