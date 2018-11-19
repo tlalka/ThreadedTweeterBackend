@@ -11,21 +11,24 @@ import twitter
 
 app = Flask(__name__)
 
-TWITTER_OATH = 'https://api.twitter.com/oauth'
+TWITTER_OAUTH = 'https://api.twitter.com/oauth'
+TT_API_URL = 'https://api.threadedtweeter.com/v2/'
+COOKIE_BASE_URL = '.threadedtweeter.com'
 os.environ['client_key'] = '#'
 os.environ['client_secret'] = '##'
 os.environ['aws_key'] = '###'
 os.environ['aws_secret'] = '####'
 
+
 @app.route('/v2/login')
 def get_login_url():
-    request_token_url = 'https://api.twitter.com/oauth/request_token'
-    base_authorization_url = 'https://api.twitter.com/oauth/authorize'
+    request_token_url = f'{TWITTER_OAUTH}/request_token'
+    base_authorization_url = f'{TWITTER_OAUTH}/authorize'
     
-    oauth_callback = 'https://api.threadedtweeter.com/v2/login/verify'
+    oauth_callback = f'{TT_API_URL}/login/verify'
     mode = request.args.get('mode')
     if mode == 'CLI':
-        oauth_callback = 'https://api.threadedtweeter.com/cliverifier'
+        oauth_callback = f'{TT_API_URL}/cliverifier'
 
     oauth = OAuth1(os.environ['client_key'], client_secret=os.environ['client_secret'])
     r = requests.post(url=request_token_url, auth=oauth, params={'oauth_callback': oauth_callback})
@@ -36,18 +39,18 @@ def get_login_url():
     authorize_url = authorize_url + resource_owner_key
     res = {
         'url': authorize_url,
-        'cookie_1': f'resource_owner_key={resource_owner_key}; domain=.threadedtweeter.com',
-        'cookie_2': f'resource_owner_secret={resource_owner_secret}; domain=.threadedtweeter.com',
+        'cookie_1': f'resource_owner_key={resource_owner_key}; domain={COOKIE_BASE_URL}',
+        'cookie_2': f'resource_owner_secret={resource_owner_secret}; domain={COOKIE_BASE_URL}',
     }
     
     flask_resp = make_response(jsonify(res), 200)
-    flask_resp.set_cookie('resource_owner_key', resource_owner_key, domain='.threadedtweeter.com')
-    flask_resp.set_cookie('resource_owner_secret', resource_owner_secret, domain='.threadedtweeter.com')
+    flask_resp.set_cookie('resource_owner_key', resource_owner_key, domain=COOKIE_BASE_URL)
+    flask_resp.set_cookie('resource_owner_secret', resource_owner_secret, domain=COOKIE_BASE_URL)
     return flask_resp
 
 @app.route('/v2/login/verify')
 def verify_login():
-    access_token_url = 'https://api.twitter.com/oauth/access_token'
+    access_token_url = f'{TWITTER_OAUTH}/access_token'
     if 'resource_owner_key' not in request.cookies and 'resource_owner_secret' not in request.cookies:
         return APIException('Unauthorized: Login cookies not found. Try logging in again.', 401).get_exception()
     oauth_verifier = request.args.get('oauth_verifier')
@@ -70,10 +73,10 @@ def verify_login():
     credentials = parse_qs(r.content)
     access_key = credentials.get(b'oauth_token')[0].decode('utf-8')
     access_secret = credentials.get(b'oauth_token_secret')[0].decode('utf-8')
-    res = {'cookie_1': f'access_token_key={access_key}; domain=.threadedtweeter.com', 'cookie_2': f'access_token_secret={access_secret}; domain=.threadedtweeter.com', 'location': 'www.threadedtweeter.com'}
+    res = {'cookie_1': f'access_token_key={access_key}; domain={COOKIE_BASE_URL}', 'cookie_2': f'access_token_secret={access_secret}; domain={COOKIE_BASE_URL}'}
     flask_resp = make_response(redirect('http://dev.threadedtweeter.com', 200))
-    flask_resp.set_cookie('access_token_key', access_key, domain='.threadedtweeter.com')
-    flask_resp.set_cookie('access_token_secret', access_secret, domain='.threadedtweeter.com')
+    flask_resp.set_cookie('access_token_key', access_key, domain=COOKIE_BASE_URL)
+    flask_resp.set_cookie('access_token_secret', access_secret, domain=COOKIE_BASE_URL)
     return flask_resp
 
 @app.route('/v2/post-thread', methods=['POST'])
