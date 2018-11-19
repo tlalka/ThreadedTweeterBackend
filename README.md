@@ -1,3 +1,5 @@
+v2 API for ThreadedTweeter
+
 clone this repo
 
 then do this
