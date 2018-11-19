@@ -1,4 +1,11 @@
+v2 API for ThreadedTweeter
+
+
+install instructions:
+
 clone this repo
+
+then do this
 https://medium.freecodecamp.org/how-to-create-a-serverless-service-in-15-minutes-b63af8c892e5
 
 make sure to install zappa AFTER activating the venv
