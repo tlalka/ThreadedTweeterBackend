@@ -93,13 +93,26 @@ def post_thread():
 
     reply_to = None
     post_res = []
+    head_tweet = None
     for tweet in status_json['TWEETS']:
         try:
             status = api.PostUpdate(tweet['STATUS'], in_reply_to_status_id=reply_to, media=tweet['MEDIA'])
             post_res.append(status.text)
             reply_to = status.id
+            if head_tweet is None:
+                head_tweet = status.id
         except Exception as e:
-            return APIException(f'Post Error: {str(e)}', 400).get_exception()
+            # do rollback
+            if head_tweet:
+                # only do rollback logic if it succeeded in posting at least 1 tweet
+                user = api.VerifyCredentials().id
+                statuses = api.GetReplies(head_tweet, trim_user=True)
+                head = api.DestroyStatus(head_tweet)
+                for status in statuses:
+                    if status.user.id == user:
+                        api.DestroyStatus(status.id)
+
+            return APIException(f'Post Error: {str(e)}\nTweets rolled back.', 400).get_exception()
 
     return json.dumps(post_res)
 
@@ -156,7 +169,6 @@ def get_cli_verifier():
     if oauth_verifier:
         html = f'<html><head><title>ThreadedTweeter Verifier Token</title></head><body><h1>Your verifier token is: {oauth_verifier} </h1></body></html>'
         return html
-
 
 @app.route('/v2')
 def api_splash():
