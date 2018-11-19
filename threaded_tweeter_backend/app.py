@@ -107,6 +107,7 @@ def post_thread():
                 # only do rollback logic if it succeeded in posting at least 1 tweet
                 user = api.VerifyCredentials().id
                 statuses = api.GetReplies(head_tweet, trim_user=True)
+                # delete inclusively
                 head = api.DestroyStatus(head_tweet)
                 for status in statuses:
                     if status.user.id == user:
