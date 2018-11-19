@@ -1,0 +1,5 @@
+zappa
+flask
+request_oauthlib
+python-twitter
+boto3
