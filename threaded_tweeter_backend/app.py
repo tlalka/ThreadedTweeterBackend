@@ -160,7 +160,7 @@ def get_cli_verifier():
 
 @app.route('/v2')
 def api_splash():
-    return 'Welcome to the ThreadedTweeter API!'
+    return 'Welcome to the ThreadedTweeter v2 API!'
 
 if __name__ == '__main__':
     app.run()
