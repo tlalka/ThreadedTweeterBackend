@@ -7,12 +7,18 @@ import json
 import boto3
 import uuid
 import twitter
+import datetime
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app)
 
 TWITTER_OAUTH = 'https://api.twitter.com/oauth'
 TT_API_URL = 'https://api.threadedtweeter.com/v2'
+expire_date = datetime.datetime.now()
+expire_date = expire_date + datetime.timedelta(days=180)
+
 COOKIE_BASE_URL = '.threadedtweeter.com'
 os.environ['client_key'] = '#'
 os.environ['client_secret'] = '##'
@@ -44,8 +50,8 @@ def get_login_url():
     }
     
     flask_resp = make_response(jsonify(res), 200)
-    flask_resp.set_cookie('resource_owner_key', resource_owner_key, domain=COOKIE_BASE_URL)
-    flask_resp.set_cookie('resource_owner_secret', resource_owner_secret, domain=COOKIE_BASE_URL)
+    flask_resp.set_cookie('resource_owner_key', resource_owner_key, domain=COOKIE_BASE_URL, expires=expire_date)
+    flask_resp.set_cookie('resource_owner_secret', resource_owner_secret, domain=COOKIE_BASE_URL, expires=expire_date)
     return flask_resp
 
 @app.route('/v2/login/verify')
@@ -74,9 +80,9 @@ def verify_login():
     access_key = credentials.get(b'oauth_token')[0].decode('utf-8')
     access_secret = credentials.get(b'oauth_token_secret')[0].decode('utf-8')
     res = {'cookie_1': f'access_token_key={access_key}; domain={COOKIE_BASE_URL}', 'cookie_2': f'access_token_secret={access_secret}; domain={COOKIE_BASE_URL}'}
-    flask_resp = make_response(redirect('http://dev.threadedtweeter.com', 200))
-    flask_resp.set_cookie('access_token_key', access_key, domain=COOKIE_BASE_URL)
-    flask_resp.set_cookie('access_token_secret', access_secret, domain=COOKIE_BASE_URL)
+    flask_resp = make_response(redirect('http://dev2.threadedtweeter.com', 200))
+    flask_resp.set_cookie('access_token_key', access_key, domain=COOKIE_BASE_URL, expires=expire_date)
+    flask_resp.set_cookie('access_token_secret', access_secret, domain=COOKIE_BASE_URL, expires=expire_date)
     return flask_resp
 
 @app.route('/v2/post-thread', methods=['POST'])
@@ -161,7 +167,7 @@ def is_logged_in():
         try:
             creds = api.VerifyCredentials()
             flask_resp = make_response(jsonify({'Status': True, 'username': creds.screen_name}))
-            flask_resp.set_cookie('username', creds.screen_name)
+            flask_resp.set_cookie('username', creds.screen_name, expires=expire_date)
             return flask_resp
         except Exception as e:
             pass
