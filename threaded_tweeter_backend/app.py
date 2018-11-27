@@ -12,7 +12,7 @@ from flask_cors import CORS
 
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 TWITTER_OAUTH = 'https://api.twitter.com/oauth'
 TT_API_URL = 'https://api.threadedtweeter.com/v2'
@@ -183,6 +183,14 @@ def get_cli_verifier():
 @app.route('/v2')
 def api_splash():
     return 'Welcome to the ThreadedTweeter v2 API!'
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://dev2.threadedtweeter.com')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 if __name__ == '__main__':
     app.run()
