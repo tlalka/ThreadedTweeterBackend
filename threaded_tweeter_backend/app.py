@@ -106,7 +106,7 @@ def post_thread():
     for tweet in status_json['TWEETS']:
         try:
             status = api.PostUpdate(tweet['STATUS'], in_reply_to_status_id=reply_to, media=tweet['MEDIA'])
-            post_res.append(status.text)
+            post_res.append({'body': status.text, 'id': status.id})
             reply_to = status.id
             if head_tweet is None:
                 head_tweet = status.id
