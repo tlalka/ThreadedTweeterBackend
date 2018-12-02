@@ -45,9 +45,14 @@ class TestPostThread(BaseTestCase):
         with patch.object(twitter, 'Api',  MockTwitterApi):
             for test in test_cases:
                 assert self.make_post(test['input']) == test['output']
+    def test_no_cookie(self):
+        test_cases = [example_tweets.no_cookies_1]
+        with patch.object(twitter, 'Api',  MockTwitterApi):
+            for test in test_cases:
+                assert self.make_post(test['input'], include_cookies=False) == test['output']
 
-
-    def make_post(self, tweet_json):
-        self.client.set_cookie('.threadedtweeter.com', 'access_token_key', 'test123')
-        self.client.set_cookie('.threadedtweeter.com', 'access_token_secret', 'test146')
+    def make_post(self, tweet_json, include_cookies=True):
+        if include_cookies:
+            self.client.set_cookie('.threadedtweeter.com', 'access_token_key', 'test123')
+            self.client.set_cookie('.threadedtweeter.com', 'access_token_secret', 'test146')
         return json.loads(self.client.post('/v2/post-thread', data=tweet_json).data)

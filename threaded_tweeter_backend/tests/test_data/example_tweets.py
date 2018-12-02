@@ -25,3 +25,13 @@ fail_tweet_1 = {'input': json.dumps({
                 ]
                 }),
                 'output': {'errorMessage': 'Post Error: \nTweets rolled back.'}}
+
+no_cookies_1 = {'input': json.dumps({
+            'TWEETS':[
+                {
+                    'STATUS':'you didnt send any auth cookies with this request :(',
+                    'MEDIA':[]
+                }
+            ]
+            }),
+            'output': {'errorMessage': 'Unauthorized: Login cookies not found. Try logging in again.'}}
