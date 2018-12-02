@@ -3,3 +3,5 @@ flask
 request_oauthlib
 python-twitter
 boto3
+flask-testing
+mock
