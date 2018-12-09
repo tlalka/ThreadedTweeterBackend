@@ -5,3 +5,4 @@ python-twitter
 boto3
 flask-testing
 mock
+Flask-Cors
