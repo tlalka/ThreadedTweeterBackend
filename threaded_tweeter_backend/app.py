@@ -16,6 +16,7 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 TWITTER_OAUTH = 'https://api.twitter.com/oauth'
 TT_API_URL = 'https://api.threadedtweeter.com/v2'
+TT_FRONT_END = 'http://dev2.threadedtweeter.com'
 expire_date = datetime.datetime.now()
 expire_date = expire_date + datetime.timedelta(days=180)
 
@@ -80,7 +81,7 @@ def verify_login():
     access_key = credentials.get(b'oauth_token')[0].decode('utf-8')
     access_secret = credentials.get(b'oauth_token_secret')[0].decode('utf-8')
     res = {'cookie_1': f'access_token_key={access_key}; domain={COOKIE_BASE_URL}', 'cookie_2': f'access_token_secret={access_secret}; domain={COOKIE_BASE_URL}'}
-    flask_resp = make_response(redirect('http://dev2.threadedtweeter.com', 200))
+    flask_resp = make_response(redirect(TT_FRONT_END, 200))
     flask_resp.set_cookie('access_token_key', access_key, domain=COOKIE_BASE_URL, expires=expire_date)
     flask_resp.set_cookie('access_token_secret', access_secret, domain=COOKIE_BASE_URL, expires=expire_date)
     return flask_resp
@@ -186,7 +187,7 @@ def api_splash():
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://dev2.threadedtweeter.com')
+    response.headers.add('Access-Control-Allow-Origin', TT_FRONT_END)
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
