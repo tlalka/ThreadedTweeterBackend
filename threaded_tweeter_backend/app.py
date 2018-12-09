@@ -103,7 +103,7 @@ def post_thread():
     reply_to = None
     post_res = []
     head_tweet = None
-    for tweet in status_json['TWEETS']:
+    for i, tweet in enumerate(status_json['TWEETS'], start=1):
         try:
             status = api.PostUpdate(tweet['STATUS'], in_reply_to_status_id=reply_to, media=tweet['MEDIA'])
             post_res.append({'body': status.text, 'id': status.id})
@@ -122,7 +122,7 @@ def post_thread():
                     if status.user.id == user:
                         api.DestroyStatus(status.id)
 
-            return APIException(f'Post Error: {str(e)}\nTweets rolled back.', 400).get_exception()
+            return APIException(f'Post Error: {str(e)}\n on tweet: #{i} "{tweet["STATUS"]}". Tweets rolled back.', 400).get_exception()
 
     return json.dumps(post_res)
 
