@@ -16,7 +16,9 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 TWITTER_OAUTH = 'https://api.twitter.com/oauth'
 TT_API_URL = 'https://api.threadedtweeter.com/v2'
-TT_FRONT_END = 'http://dev2.threadedtweeter.com'
+TT_FRONT_END = 'http://threadedtweeter.com'
+domain_white_list = ['http://threadedtweeter.com', 'http://www.threadedtweeter.com']
+
 expire_date = datetime.datetime.now()
 expire_date = expire_date + datetime.timedelta(days=180)
 
@@ -29,6 +31,7 @@ os.environ['aws_secret'] = '####'
 
 @app.route('/v2/login')
 def get_login_url():
+    # Asks Twitter to give us a login URL to send to the user
     request_token_url = f'{TWITTER_OAUTH}/request_token'
     base_authorization_url = f'{TWITTER_OAUTH}/authorize'
     
@@ -57,6 +60,8 @@ def get_login_url():
 
 @app.route('/v2/login/verify')
 def verify_login():
+    # Receives callback from Twitter containing verifier token, uses this token to ask Twitter for 
+    # API credentials
     access_token_url = f'{TWITTER_OAUTH}/access_token'
     if 'resource_owner_key' not in request.cookies and 'resource_owner_secret' not in request.cookies:
         return APIException('Unauthorized: Login cookies not found. Try logging in again.', 401).get_exception()
@@ -88,6 +93,7 @@ def verify_login():
 
 @app.route('/v2/post-thread', methods=['POST'])
 def post_thread():
+    # Posts the thread, on error, deletes from the first posted tweet.
     if 'access_token_key' not in request.cookies and 'access_token_secret' not in request.cookies:
         return APIException('Unauthorized: Login cookies not found. Try logging in again.', 401).get_exception()
 
@@ -129,6 +135,7 @@ def post_thread():
 
 @app.route('/v2/upload')
 def get_upload_url():
+    # Generates S3 Upload URL for media uploading prior to sending to Twitter.
     upload_key = uuid.uuid4().hex
     
     session = boto3.session.Session(
@@ -158,6 +165,7 @@ def get_upload_url():
 
 @app.route('/v2/login/status')
 def is_logged_in():
+    # Checks Twitter API creds in cookies and returns login status + username.
     if 'access_token_key' in request.cookies and 'access_token_secret' in request.cookies:
         access_token_key = request.cookies.get('access_token_key')
         access_token_secret = request.cookies.get('access_token_secret')
@@ -176,6 +184,8 @@ def is_logged_in():
 
 @app.route('/v2/cliverifier')
 def get_cli_verifier():
+    # Same idea as /v2/login/verify, except captures the verifier from the callback and asks the CLI user
+    # to manually input it in CLI, so that the CLI handles the API cred fetching. 
     oauth_verifier = request.args.get('oauth_verifier')
     if oauth_verifier:
         html = f'<html><head><title>ThreadedTweeter Verifier Token</title></head><body><h1>Your verifier token is: {oauth_verifier} </h1></body></html>'
@@ -187,10 +197,12 @@ def api_splash():
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', TT_FRONT_END)
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    r = request.referrer[:-1]
+    if r in domain_white_list:
+        response.headers.add('Access-Control-Allow-Origin', r)
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
 if __name__ == '__main__':
