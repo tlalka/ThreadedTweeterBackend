@@ -40,6 +40,7 @@ Part 2: Backend deploy
 9. Run zappa deploy, should take several minutes
 10. If successful, it should give you a link to the backend. Go to it and see if you can see the splash page! Remember to add /v2 to the URL. 
 11. Go back to app.py and change TT_API_URL to the URL you got from Zappa or whatever domain name you have pointed at your server if you are just running Flask.
+12. Go to your Twitter developer dashboard -> Apps -> the ThreadedTweeter app -> Add v2/login/verify route to allowed callback url. Add /v2/cliverifier route if you want to support CLI requests. 
 
 Part 3: Frontend deploy
 1. Follow instructions here to build frontend. Make sure to change references to api.threadedtweeter.com/v2 to whatever backend URL you just deployed! 
