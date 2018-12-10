@@ -56,7 +56,7 @@ Current Problems:
 3. Doesn't use Dependency Injection. Couldn't figure out how Flask Dependency Injection works (if you want to do it at that level).
 4. Messy/ugly auth code. Could probably be cleaned up. 
 5. Needs a better method of storing keys. Manually set with os.environ at launch.
-
+6. Doesn't use https :( 
 
 Future tests:
 I've provided an outline of how you construct tests with Flask, but this method uses patching. 
