@@ -29,6 +29,7 @@ Part 1: The AWS setup.
 	7. Click next, review. Done!
 
 Part 2: Backend deploy
+0. Make sure you've made an App on twitter. If you already have API keys, then you've done this. If not, make a new app and get some API keys!
 1. Clone backend repo -> https://github.com/peakay/ThreadedTweeterBackend
 2. Setup virtualenv https://docs.python-guide.org/dev/virtualenvs/ (NOTE, not pipenv, pipenv sucks) inside repo directory
 3. Activate it
