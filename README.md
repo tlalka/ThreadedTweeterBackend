@@ -4,7 +4,7 @@ Deploying ThreadedTweeter Backend + Frontend
 
 Things you will need:
 1. An AWS account
-2. Twitter API keys
+2. Twitter API keys (go https://developer.twitter.com/en/apply-for-access.html to make/apply for a developer account, not hard to get!)
 2. A computer with Python 3.6+ and internet
 
 Part 1: The AWS setup.
