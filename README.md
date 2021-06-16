@@ -23,10 +23,26 @@ Part 1: The AWS setup.
 	1. Do this for the frontend https://scotch.io/@blizzerand11/deploy-and-sync-a-react-app-to-amazon-s3
 	2. Make a new bucket for media, call it "media-bucket" or something. 
 	3. Go to Permissions -> Bucket Policy.
-	4. Paste this in https://gist.github.com/peakay/c0c8aaf57a0ea7eeb0c5dc9d85874011 with necessary modifications.
-	5. Go to Mamagement, Add Lifecycle rule
-	6. Make a name for your rule, click next on Transitions, on Expirations click the Current version and make set some # of days for anything uploaded to the bucket to be automatically purged.
-	7. Click next, review. Done!
+	4. Paste this in https://gist.github.com/peakay/c0c8aaf57a0ea7eeb0c5dc9d85874011 with necessary modifications. Ex:
+
+{
+    "Version": "2012-10-17",
+    "Id": "Policy1540246581673",
+    "Statement": [
+        {
+            "Sid": "Stmt1540246577650",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::220564146530:user/ThreadedTweeter"
+            },
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::tt-media-bucket/*"
+        }
+    ]
+}
+	6. Go to Mamagement, Add Lifecycle rule
+	7. Make a name for your rule, click next on Transitions, on Expirations click the Current version and make set some # of days for anything uploaded to the bucket to be automatically purged.
+	8. Click next, review. Done!
 
 Part 2: Backend deploy
 0. Make sure you've made an App on twitter. If you already have API keys, then you've done this. If not, make a new app and get some API keys!
