@@ -23,10 +23,10 @@ expire_date = datetime.datetime.now()
 expire_date = expire_date + datetime.timedelta(days=180)
 
 COOKIE_BASE_URL = '.threadedtweeter.com'
-os.environ['client_key'] = '#'
-os.environ['client_secret'] = '##'
-os.environ['aws_key'] = '###'
-os.environ['aws_secret'] = '####'
+os.environ['client_key'] = 'JWaFgM9ife7nSVwTYqvwE0GHn'
+os.environ['client_secret'] = 'aI9HV8Usd4BUEzb9A1OpcwP4uGvmDBecpC1untLnNQxB5IFiLk'
+os.environ['aws_key'] = 'AKIATGWVFZFROEEDDYLM'
+os.environ['aws_secret'] = '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'
 
 
 @app.route('/v2/login')
