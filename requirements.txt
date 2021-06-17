@@ -1,6 +1,6 @@
 zappa
 flask
-request_oauthlib
+requests_oauthlib
 python-twitter
 boto3
 flask-testing
