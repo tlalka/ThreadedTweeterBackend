@@ -20,7 +20,7 @@ Part 1: The AWS setup.
 	9. Done!
  
 2. Make the s3 buckets for the frontend and media uploading service.
-	1. Do this for the frontend https://scotch.io/@blizzerand11/deploy-and-sync-a-react-app-to-amazon-s3
+	1. Do this for the frontend https://andela.com/insights/how-to-deploy-your-react-app-to-aws-s3/
 	2. Make a new bucket for media, call it "media-bucket" or something. 
 	3. Go to Permissions -> Bucket Policy.
 	4. Paste this in https://gist.github.com/peakay/c0c8aaf57a0ea7eeb0c5dc9d85874011 with necessary modifications. Ex:
