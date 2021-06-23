@@ -14,24 +14,45 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
+#Test
 TWITTER_OAUTH = 'https://api.twitter.com/oauth'
-TT_API_URL = 'https://api.threadedtweeter.com/v2'
-TT_FRONT_END = 'http://threadedtweeter.com'
-domain_white_list = ['http://threadedtweeter.com', 'http://www.threadedtweeter.com']
+TT_API_URL = 'http://127.0.0.1:5000/v2' 
+TT_FRONT_END = 'http://127.0.0.1:3000' 
+COOKIE_BASE_URL = '127.0.0.1'
+
+#prod
+#TT_API_URL = 'https://0n0zjltdyi.execute-api.us-east-1.amazonaws.com/dev/v2'
+#TT_FRONT_END = 'http://threaded-tweeter-site.s3.us-east-2.amazonaws.com'
+#COOKIE_BASE_URL = '0n0zjltdyi.execute-api.us-east-1.amazonaws.com' 
+
+domain_white_list = ['http://threaded-tweeter-site.s3.us-east-2.amazonaws.com', 'http://127.0.0.1:3000', 'http://127.0.0.1:5000']
 
 expire_date = datetime.datetime.now()
 expire_date = expire_date + datetime.timedelta(days=180)
 
-COOKIE_BASE_URL = '.threadedtweeter.com'
-os.environ['client_key'] = 'JWaFgM9ife7nSVwTYqvwE0GHn'
-os.environ['client_secret'] = 'aI9HV8Usd4BUEzb9A1OpcwP4uGvmDBecpC1untLnNQxB5IFiLk'
-os.environ['aws_key'] = 'AKIATGWVFZFROEEDDYLM'
-os.environ['aws_secret'] = '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'
+#used for uploading to AWS, not needed to run locally
+os.environ['client_key'] = '' 
+os.environ['client_secret'] = '' 
+
+#bucket was made public, so you no longer need these
+os.environ['aws_key'] = ''
+os.environ['aws_secret'] = ''
+
+class APIException:
+
+    def __init__(self, message, status_code):
+        self.message = json.dumps({'errorMessage': message})
+        self.status_code = status_code
+
+    def get_exception(self):
+        return self.message, self.status_code
 
 
 @app.route('/v2/login')
 def get_login_url():
     # Asks Twitter to give us a login URL to send to the user
+    # Need to save the cookie on the API page, not front-end
+    print("start login")
     request_token_url = f'{TWITTER_OAUTH}/request_token'
     base_authorization_url = f'{TWITTER_OAUTH}/authorize'
     
@@ -42,9 +63,13 @@ def get_login_url():
 
     oauth = OAuth1(os.environ['client_key'], client_secret=os.environ['client_secret'])
     r = requests.post(url=request_token_url, auth=oauth, params={'oauth_callback': oauth_callback})
+    
     credentials = parse_qs(r.content)
+    print(credentials) 
     resource_owner_key = credentials.get(b'oauth_token')[0].decode('utf-8')
     resource_owner_secret = credentials.get(b'oauth_token_secret')[0].decode('utf-8')
+    print(resource_owner_key)
+    print(resource_owner_secret)
     authorize_url = base_authorization_url + '?oauth_token='
     authorize_url = authorize_url + resource_owner_key
     res = {
@@ -52,26 +77,30 @@ def get_login_url():
         'cookie_1': f'resource_owner_key={resource_owner_key}; domain={COOKIE_BASE_URL}',
         'cookie_2': f'resource_owner_secret={resource_owner_secret}; domain={COOKIE_BASE_URL}',
     }
-    
     flask_resp = make_response(jsonify(res), 200)
     flask_resp.set_cookie('resource_owner_key', resource_owner_key, domain=COOKIE_BASE_URL, expires=expire_date)
     flask_resp.set_cookie('resource_owner_secret', resource_owner_secret, domain=COOKIE_BASE_URL, expires=expire_date)
+    
     return flask_resp
 
 @app.route('/v2/login/verify')
 def verify_login():
     # Receives callback from Twitter containing verifier token, uses this token to ask Twitter for 
     # API credentials
+    print("start verify")
     access_token_url = f'{TWITTER_OAUTH}/access_token'
+    
     if 'resource_owner_key' not in request.cookies and 'resource_owner_secret' not in request.cookies:
         return APIException('Unauthorized: Login cookies not found. Try logging in again.', 401).get_exception()
     oauth_verifier = request.args.get('oauth_verifier')
+    
     if oauth_verifier is None:
         return APIException('Unauthorized: Missing oauth_verifier', 401).get_exception()
 
     resource_owner_key = request.cookies.get('resource_owner_key')
     resource_owner_secret = request.cookies.get('resource_owner_secret')
 
+#We got the creds, but somewhere here it's unhappy
     try:
         oauth = OAuth1(os.environ['client_key'],
                         client_secret=os.environ['client_secret'],
@@ -79,14 +108,17 @@ def verify_login():
                         resource_owner_secret=resource_owner_secret,
                         verifier=oauth_verifier)
         r = requests.post(url=access_token_url, auth=oauth)
-        r.raise_for_status()
+        print(r.raise_for_status())
     except Exception as e:
         return APIException('Unauthorized: Oauth credentials incorrect. Try logging in again.', 401).get_exception()
+
+
     credentials = parse_qs(r.content)
     access_key = credentials.get(b'oauth_token')[0].decode('utf-8')
     access_secret = credentials.get(b'oauth_token_secret')[0].decode('utf-8')
     res = {'cookie_1': f'access_token_key={access_key}; domain={COOKIE_BASE_URL}', 'cookie_2': f'access_token_secret={access_secret}; domain={COOKIE_BASE_URL}'}
-    flask_resp = make_response(redirect(TT_FRONT_END, 200))
+    flask_resp = make_response(redirect(TT_FRONT_END)) #must leave return code blank or set to 301 to redirect
+    
     flask_resp.set_cookie('access_token_key', access_key, domain=COOKIE_BASE_URL, expires=expire_date)
     flask_resp.set_cookie('access_token_secret', access_secret, domain=COOKIE_BASE_URL, expires=expire_date)
     return flask_resp
@@ -138,6 +170,8 @@ def get_upload_url():
     # Generates S3 Upload URL for media uploading prior to sending to Twitter.
     upload_key = uuid.uuid4().hex
     
+    #This isn't secure. You can just go to this URL and get the AWS secret and key
+    # need to make sure this acess key is very limited. s3 read and upload acess only
     session = boto3.session.Session(
           aws_access_key_id=os.environ['aws_key'], 
           aws_secret_access_key=os.environ['aws_secret'])
@@ -154,7 +188,7 @@ def get_upload_url():
     
     # Generate the POST attributes
     post = s3.generate_presigned_post(
-        Bucket='threadtweeter-media',
+        Bucket='tt-media-bucket',
         Key=upload_key+'/${filename}',
         Fields=fields,
         Conditions=conditions,
@@ -193,26 +227,27 @@ def get_cli_verifier():
 
 @app.route('/v2')
 def api_splash():
-    return 'Welcome to the ThreadedTweeter v2 API!'
+    res = make_response('Welcome to the ThreadedTweeter v2 API!')
+    #res.set_cookie('testcookie', 'test',expires=expire_date)
+    return res
 
 @app.after_request
 def after_request(response):
-    r = request.referrer[:-1]
-    if r in domain_white_list:
-        response.headers.add('Access-Control-Allow-Origin', r)
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    print("request and response")
+    print(request)
+    print(response)
+    
+    if 'Referer' in request.headers:
+        r = request.headers['Referer']
+        
+        if r in domain_white_list:
+            response.headers.add('Access-Control-Allow-Origin', r)
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+            response.headers.add('Access-Control-Allow-Credentials', 'true')
+            response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
 if __name__ == '__main__':
     app.run()
 
-class APIException:
 
-    def __init__(self, message, status_code):
-        self.message = json.dumps({'errorMessage': message})
-        self.status_code = status_code
-
-    def get_exception(self):
-        return self.message, self.status_code
