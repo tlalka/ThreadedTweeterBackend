@@ -14,22 +14,22 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
-#Test
 TWITTER_OAUTH = 'https://api.twitter.com/oauth'
 
-COOKIE_BASE_PATH = '/v2' #why this? helps us test locally for when front end and back end domains are different
-TT_API_URL = 'http://127.0.0.1:5000/v2' 
-TT_FRONT_END = 'http://127.0.0.1:3000' 
-COOKIE_BASE_URL = '127.0.0.1'
-SITE_BASE_URL = '127.0.0.1'
+#dev paths
+#COOKIE_BASE_PATH = '/v2' #why this? helps us test locally for when front end and back end domains are different
+#TT_API_URL = 'http://127.0.0.1:5000/v2' 
+#TT_FRONT_END = 'http://127.0.0.1:3000' 
+#COOKIE_BASE_URL = '127.0.0.1:5000'
+#SITE_BASE_URL = '127.0.0.1'
 
 
-#prod
-#TT_API_URL = 'https://0n0zjltdyi.execute-api.us-east-1.amazonaws.com/dev/v2'
-#TT_FRONT_END = 'http://threaded-tweeter-site.s3.us-east-2.amazonaws.com/index.html'
-#COOKIE_BASE_URL = '0n0zjltdyi.execute-api.us-east-1.amazonaws.com'
-#COOKIE_BASE_PATH = 'dev/v2'
-#SITE_BASE_URL = 'http://threaded-tweeter-site.s3.us-east-2.amazonaws.com'
+#prod paths
+TT_API_URL = 'https://0n0zjltdyi.execute-api.us-east-1.amazonaws.com/dev/v2'
+TT_FRONT_END = 'http://threaded-tweeter-site.s3.us-east-2.amazonaws.com/index.html'
+COOKIE_BASE_URL = '0n0zjltdyi.execute-api.us-east-1.amazonaws.com'
+COOKIE_BASE_PATH = 'dev/v2'
+SITE_BASE_URL = 'http://threaded-tweeter-site.s3.us-east-2.amazonaws.com'
 
 domain_white_list = ['http://threaded-tweeter-site.s3.us-east-2.amazonaws.com', 'http://127.0.0.1:3000', 'http://127.0.0.1:5000']
 
@@ -90,7 +90,6 @@ def get_login_url():
 def verify_login():
     # Receives callback from Twitter containing verifier token, uses this token to ask Twitter for 
     # API credentials
-    # Creates query URL with the login information for the frontend to capture
     print("start verify")
     access_token_url = f'{TWITTER_OAUTH}/access_token'
     
@@ -104,6 +103,7 @@ def verify_login():
     resource_owner_key = request.cookies.get('resource_owner_key')
     resource_owner_secret = request.cookies.get('resource_owner_secret')
 
+#We got the creds, but somewhere here it's unhappy
     try:
         oauth = OAuth1(os.environ['client_key'],
                         client_secret=os.environ['client_secret'],
@@ -120,24 +120,26 @@ def verify_login():
     access_key = credentials.get(b'oauth_token')[0].decode('utf-8')
     access_secret = credentials.get(b'oauth_token_secret')[0].decode('utf-8')
     res = {'cookie_1': f'access_token_key={access_key}; domain={COOKIE_BASE_URL}', 'cookie_2': f'access_token_secret={access_secret}; domain={COOKIE_BASE_URL}'}
-
-    redirectTo = TT_FRONT_END + "querytype=loginverify&access_token_key=" + access_key + "&access_token_secret=" + access_secret
-    flask_resp = make_response(redirect(redirectTo)) #must leave return code blank or set to 301 to redirect
+    redirectTo = TT_FRONT_END + "?querytype=loginverify&access_token_key=" + access_key + "&access_token_secret=" + access_secret
     print(redirectTo)
-    #flask_resp.set_cookie('access_token_key', access_key, domain=COOKIE_BASE_URL, expires=expire_date, path=COOKIE_BASE_PATH)
-    #flask_resp.set_cookie('access_token_secret', access_secret, domain=COOKIE_BASE_URL, expires=expire_date, path=COOKIE_BASE_PATH)
+
+    flask_resp = make_response(redirect(redirectTo)) #must leave return code blank or set to 301 to redirect
     
+    flask_resp.set_cookie('access_token_key', access_key, domain=COOKIE_BASE_URL, expires=expire_date)
+    flask_resp.set_cookie('access_token_secret', access_secret, domain=COOKIE_BASE_URL, expires=expire_date)
     return flask_resp
+
 
 @app.route('/v2/post-thread', methods=['POST'])
 def post_thread():
     # Posts the thread, on error, deletes from the first posted tweet.
-    if 'access_token_key' not in request.cookies and 'access_token_secret' not in request.cookies:
+    access_token_secret = request.args.get('access_token_secret')
+    access_token_key = request.args.get('access_token_key')
+    
+    if not (access_token_secret and access_token_key):
         return APIException('Unauthorized: Login cookies not found. Try logging in again.', 401).get_exception()
 
     status_json = json.loads(request.data)
-    access_token_key = request.cookies.get('access_token_key')
-    access_token_secret = request.cookies.get('access_token_secret')
 
     try:
         api = twitter.Api(consumer_key=os.environ['client_key'], consumer_secret=os.environ['client_secret'],
@@ -206,9 +208,10 @@ def get_upload_url():
 @app.route('/v2/login/status')
 def is_logged_in():
     # Checks Twitter API creds in cookies and returns login status + username.
-    if 'access_token_key' in request.cookies and 'access_token_secret' in request.cookies:
-        access_token_key = request.cookies.get('access_token_key')
-        access_token_secret = request.cookies.get('access_token_secret')
+    access_token_secret = request.args.get('access_token_secret')
+    access_token_key = request.args.get('access_token_key')
+    
+    if access_token_secret and access_token_key:
         api = twitter.Api(consumer_key=os.environ['client_key'],
                           consumer_secret=os.environ['client_secret'],
                           access_token_key=access_token_key,
