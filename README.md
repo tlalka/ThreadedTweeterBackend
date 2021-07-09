@@ -58,7 +58,7 @@ Ex:
         }
     ]
 }
-	4. Go to Mamagement, Add Lifecycle rule
+	4. Go to Mamegement, Add Lifecycle rule
 	5. Make a name for your rule, click next on Transitions, on Expirations click the Current version and make set some # of days for anything uploaded to the bucket to be automatically purged. For this application, one day is good. 
 	6. Click next, review. Done!
 
