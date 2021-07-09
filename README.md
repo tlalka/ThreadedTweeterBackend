@@ -1,8 +1,11 @@
 Asher's revived ThreadedTweeter project
 
 Site hosted on: https://threaded-tweeter-site.s3.us-east-2.amazonaws.com/index.html
+
 APIs hosted on: https://0n0zjltdyi.execute-api.us-east-1.amazonaws.com/dev
+
 Bucket for uploading user images: arn:aws:s3:::tt-media-bucket/*
+
 Frontend code: https://github.com/tlalka/TTDeploy/branches
 
 What's new?
